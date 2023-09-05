@@ -108,14 +108,10 @@ class ldapAliasSync extends rcube_plugin {
 			$uri = $config['scheme'].'://'.$config['server'].':'.$config['port'];
 		}
 
-		$con = ldap_connect($uri);
+		$con = ldap_connect($uri) or call_user_func(function() { throw new Exception(sprintf("Connection to the server failed: (Error=%s)", ldap_errno($con))); });
 
-		if ( is_resource($con) ) {
-			$this->log_debug("LDAP resource: ".$uri);
-			ldap_set_option($con, LDAP_OPT_PROTOCOL_VERSION, 3);
-		} else {
-			throw new Exception(sprintf("Connection to the server failed: (Error=%s)", ldap_errno($con)));
-		}
+		$this->log_debug("LDAP resource: ".$uri);
+		ldap_set_option($con, LDAP_OPT_PROTOCOL_VERSION, 3);
 
 		// Bind to server
 		if ( $this->cfg_ldap['bind_dn'] ){
@@ -548,7 +544,7 @@ class ldapAliasSync extends rcube_plugin {
 	}
 
 	function check_user_config($config) {
-		$DEREFS   = array($LDAP_DEREF_NEVER, $LDAP_DEREF_FINDING, $LDAP_DEREF_SEARCHING, $LDAP_DEREF_ALWAYS);
+		$DEREFS   = array(LDAP_DEREF_NEVER, LDAP_DEREF_FINDING, LDAP_DEREF_SEARCHING, LDAP_DEREF_ALWAYS);
 		$MAIL_BYS = array('attribute', 'dn', 'memberof', 'static');
 		$NDATTRS  = array('stop', 'skip');
 
@@ -618,16 +614,16 @@ class ldapAliasSync extends rcube_plugin {
 		// Override values
 		switch ( $config['deref'] ) {
 			case 'never':
-				$config['deref'] = $LDAP_DEREF_NEVER;
+				$config['deref'] = LDAP_DEREF_NEVER;
 				break;
 			case 'search':
-				$config['deref'] = $LDAP_DEREF_SEARCHING;
+				$config['deref'] = LDAP_DEREF_SEARCHING;
 				break;
 			case 'find':
-				$config['deref'] = $LDAP_DEREF_FINDING;
+				$config['deref'] = LDAP_DEREF_FINDING;
 				break;
 			case 'always':
-				$config['deref'] = $LDAP_DEREF_ALWAYS;
+				$config['deref'] = LDAP_DEREF_ALWAYS;
 				break;
 		}
 
@@ -674,7 +670,7 @@ class ldapAliasSync extends rcube_plugin {
 	}
 
 	function check_alias_config($config) {
-		$DEREFS   = array($LDAP_DEREF_NEVER, $LDAP_DEREF_SEARCHING, $LDAP_DEREF_FINDING, $LDAP_DEREF_ALWAYS);
+		$DEREFS   = array(LDAP_DEREF_NEVER, LDAP_DEREF_SEARCHING, LDAP_DEREF_FINDING, LDAP_DEREF_ALWAYS);
 		$MAIL_BYS = array('attribute', 'dn', 'memberof', 'static');
 		$NDATTRS  = array('stop', 'skip');
 
@@ -744,16 +740,16 @@ class ldapAliasSync extends rcube_plugin {
 		// Override values
 		switch ( $config['deref'] ) {
 			case 'never':
-				$config['deref'] = $LDAP_DEREF_NEVER;
+				$config['deref'] = LDAP_DEREF_NEVER;
 				break;
 			case 'search':
-				$config['deref'] = $LDAP_DEREF_SEARCHING;
+				$config['deref'] = LDAP_DEREF_SEARCHING;
 				break;
 			case 'find':
-				$config['deref'] = $LDAP_DEREF_FINDING;
+				$config['deref'] = LDAP_DEREF_FINDING;
 				break;
 			case 'always':
-				$config['deref'] = $LDAP_DEREF_ALWAYS;
+				$config['deref'] = LDAP_DEREF_ALWAYS;
 				break;
 		}
 
