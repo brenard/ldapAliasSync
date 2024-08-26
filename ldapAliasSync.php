@@ -39,11 +39,11 @@ class ldapAliasSync extends rcube_plugin {
 			// Load plugin config settings
 			$this->config = $this->app->config->get('ldapAliasSync');
 
-			$this->cfg_ldap	   = $this->check_ldap_config($this->config['ldap']);
-			$this->cfg_mail	   = $this->check_mail_config($this->config['mail']);
-			$this->cfg_user	   = $this->check_user_config($this->config['user_search']);
-			$this->cfg_alias   = $this->check_alias_config($this->config['alias_search']);
-			$this->cfg_general = $this->check_general_config($this->config['general']);
+			$this->cfg_ldap	   = $this->check_ldap_config($this->config['ldap'] ?? []);
+			$this->cfg_mail	   = $this->check_mail_config($this->config['mail'] ?? []);
+			$this->cfg_user	   = $this->check_user_config($this->config['user_search'] ?? []);
+			$this->cfg_alias   = $this->check_alias_config($this->config['alias_search'] ?? []);
+			$this->cfg_general = $this->check_general_config($this->config['general'] ?? []);
 			$this->log_debug('Configuration successfully loaded');
 
 			// register hook
@@ -76,7 +76,10 @@ class ldapAliasSync extends rcube_plugin {
 		try {
 			$this->rc_user = rcmail::get_instance()->user;
 			$login = $this->get_login_info($this->rc_user->get_username('mail'), $this->cfg_mail);
-			$this->log_debug("User information: %login: ".$login['login'].", %local: ".$login['local'].", %domain: ".$login['domain'].", %email: ".$login['email']);
+			$this->log_debug(
+				"User information: %login: ".$login['login'].", %local: ".$login['local'].
+				", %domain: ".$login['domain'].", %email: ".$login['email']
+			);
 
 			$this->ldap_con  = $this->initialize_ldap($this->cfg_ldap);
 			$this->log_debug("LDAP connection established");
@@ -114,7 +117,10 @@ class ldapAliasSync extends rcube_plugin {
 			$this->log_debug("LDAP resource: ".$uri);
 			ldap_set_option($con, LDAP_OPT_PROTOCOL_VERSION, 3);
 		} else {
-			throw new Exception(sprintf("Connection to the server failed: (Error=%s)", ldap_errno($con)));
+			throw new Exception(sprintf(
+				"Connection to the LDAP server '$uri' failed: (Error=%s)",
+				ldap_errno($con)
+			));
 		}
 
 		// Bind to server
@@ -125,7 +131,10 @@ class ldapAliasSync extends rcube_plugin {
                 }
 
 		if ( ! $bound ) {
-			throw new Exception(sprintf("Bind to server '%s' failed. Con: (%s), Error: (%s)", $this->cfg_ldap['server'], $con, ldap_errno($con)));
+			throw new Exception(sprintf(
+				"Bind to server '%s' failed. Con: (%s), Error: (%s)",
+				$this->cfg_ldap['server'], $con, ldap_errno($con)
+			));
 		} else {
 			$this->log_debug("LDAP Bind successfull");
 		}
@@ -305,12 +314,12 @@ class ldapAliasSync extends rcube_plugin {
 		if ( $config['attr_sig'] ) {
 			$ldap_temp = $ldap_id[$config['attr_sig']];
 			$identity['signature'] = $ldap_temp[0];
-		}
 
-		if ( preg_match('/^\s*<[a-zA-Z]+/', $identity['signature']) ) {
-			$identity['html_signature'] = 1;
-		} else {
-			$identity['html_signature'] = 0;
+			if ( preg_match('/^\s*<[a-zA-Z]+/', $identity['signature']) ) {
+				$identity['html_signature'] = 1;
+			} else {
+				$identity['html_signature'] = 0;
+			}
 		}
 
 		// Get e-mail address
@@ -481,19 +490,19 @@ class ldapAliasSync extends rcube_plugin {
 	}
 
 	function log_warning($msg) {
-		if ( $this->cfg_general['log_level'] >= 1 ) {
+		if ( ($this->cfg_general['log_level'] ?? 0) >= 1 ) {
 			rcmail::write_log('ldapAliasSync', "WARNING: ".$msg);
 		}
 	}
 
 	function log_info($msg) {
-		if ( $this->cfg_general['log_level'] >= 2 ) {
+		if ( ($this->cfg_general['log_level'] ?? 0) >= 2 ) {
 			rcmail::write_log('ldapAliasSync', "INFO: ".$msg);
 		}
 	}
 
 	function log_debug($msg) {
-		if ( $this->cfg_general['log_level'] >= 3 ) {
+		if ( ($this->cfg_general['log_level'] ?? 0) >= 3 ) {
 			rcmail::write_log('ldapAliasSync', "DEBUG: ".$msg);
 		}
 	}
@@ -503,19 +512,19 @@ class ldapAliasSync extends rcube_plugin {
 		$SCHEMES = array('ldap', 'ldaps', 'ldapi');
 
 		// Set default values for empty config parameters
-		if (! $config['scheme']) {
+		if (! ($config['scheme'] ?? null)) {
 			$config['scheme'] = 'ldap';
 		}
-		if (! $config['server']) {
+		if (! ($config['server'] ?? null)) {
 			$config['server'] = 'localhost';
 		}
-		if (! $config['port']) {
-			$config['port'] = '389';
+		if (! ($config['port'] ?? null)) {
+			$config['port'] = ($config['scheme'] == "ldaps" ? "636" : "389");
 		}
-		if (! $config['bind_dn']) {
+		if (! ($config['bind_dn'] ?? null)) {
 			$config['bind_dn'] = '';
 		}
-		if (! $config['bind_pw']) {
+		if (! ($config['bind_pw'] ?? null)) {
 			$config['bind_pw'] = '';
 		}
 
@@ -529,13 +538,13 @@ class ldapAliasSync extends rcube_plugin {
 
 	function check_mail_config($config) {
 		// Set default values for empty config parameters
-		if (! $config['search_domain']) {
+		if (! ($config['search_domain'] ?? null)) {
 			$config['search_domain'] = '';
 		}
-		if (! $config['replace_domain']) {
+		if (! ($config['replace_domain'] ?? null)) {
 			$config['replace_domain'] = false;
 		}
-		if (! $config['dovecot_separator']) {
+		if (! ($config['dovecot_separator'] ?? null)) {
 			$config['dovecot_separator'] = '';
 		}
 
@@ -553,63 +562,63 @@ class ldapAliasSync extends rcube_plugin {
 		$NDATTRS  = array('stop', 'skip');
 
 		// Set default values for empty config parameters
-		if (! $config['base_dn']) {
+		if (! ($config['base_dn'] ?? null)) {
 			$config['base_dn'] = '';
 		}
-		if (! $config['filter']) {
+		if (! ($config['filter'] ?? null)) {
 			$config['filter'] = '(objectClass=*)';
 		}
-		if (! $config['deref']) {
+		if (! ($config['deref'] ?? null)) {
 			$config['deref'] = 'never';
 		}
-		if (! $config['mail_by']) {
+		if (! ($config['mail_by'] ?? null)) {
 			$config['mail_by'] = 'attribute';
 		}
-		if (! $config['attr_mail']) {
+		if (! ($config['attr_mail'] ?? null)) {
 			$config['attr_mail'] = 'mail';
 		} else {
 			$config['attr_mail'] = strtolower($config['attr_mail']);
 		}
-		if (! $config['attr_local']) {
+		if (! ($config['attr_local'] ?? null)) {
 			$config['attr_local'] = '';
 		} else {
 			$config['attr_local'] = strtolower($config['attr_local']);
 		}
-		if (! $config['attr_dom']) {
+		if (! ($config['attr_dom'] ?? null)) {
 			$config['attr_dom'] = '';
 		} else {
 			$config['attr_dom'] = strtolower($config['attr_dom']);
 		}
-		if (! $config['domain_static']) {
+		if (! ($config['domain_static'] ?? null)) {
 			$config['domain_static'] = '';
 		}
-		if (! $config['ignore_domains']) {
+		if (! ($config['ignore_domains'] ?? null)) {
 			$config['ignore_domains'] = array();
 		}
-		if (! $config['non_domain_attr']) {
+		if (! ($config['non_domain_attr'] ?? null)) {
 			$config['non_domain_attr'] = 'stop';
 		}
-		if (! $config['attr_name']) {
+		if (! ($config['attr_name'] ?? null)) {
 			$config['attr_name'] = '';
 		} else {
 			$config['attr_name'] = strtolower($config['attr_name']);
 		}
-		if (! $config['attr_org']) {
+		if (! ($config['attr_org'] ?? null)) {
 			$config['attr_org'] = '';
 		} else {
 			$config['attr_org'] = strtolower($config['attr_org']);
 		}
-		if (! $config['attr_reply']) {
+		if (! ($config['attr_reply'] ?? null)) {
 			$config['attr_reply'] = '';
 		} else {
 			$config['attr_reply'] = strtolower($config['attr_reply']);
 		}
-		if (! $config['attr_bcc']) {
+		if (! ($config['attr_bcc'] ?? null)) {
 			$config['attr_bcc'] = '';
 		} else {
 			$config['attr_bcc'] = strtolower($config['attr_bcc']);
 		}
-		if (! $config['attr_sig']) {
+		if (! ($config['attr_sig'] ?? null)) {
 			$config['attr_sig'] = '';
 		} else {
 			$config['attr_sig'] = strtolower($config['attr_sig']);
@@ -679,63 +688,63 @@ class ldapAliasSync extends rcube_plugin {
 		$NDATTRS  = array('stop', 'skip');
 
 		// Set default values for empty config parameters
-		if (! $config['base_dn']) {
+		if (! ($config['base_dn'] ?? null)) {
 			$config['base_dn'] = '';
 		}
-		if (! $config['filter']) {
+		if (! ($config['filter'] ?? null)) {
 			$config['filter'] = '(objectClass=*)';
 		}
-		if (! $config['deref']) {
+		if (! ($config['deref'] ?? null)) {
 			$config['deref'] = 'never';
 		}
-		if (! $config['mail_by']) {
+		if (! ($config['mail_by'] ?? null)) {
 			$config['mail_by'] = 'attribute';
 		}
-		if (! $config['attr_mail']) {
+		if (! ($config['attr_mail'] ?? null)) {
 			$config['attr_mail'] = 'mail';
 		} else {
 			$config['attr_mail'] = strtolower($config['attr_mail']);
 		}
-		if (! $config['attr_local']) {
+		if (! ($config['attr_local'] ?? null)) {
 			$config['attr_local'] = '';
 		} else {
 			$config['attr_local'] = strtolower($config['attr_local']);
 		}
-		if (! $config['attr_dom']) {
+		if (! ($config['attr_dom'] ?? null)) {
 			$config['attr_dom'] = '';
 		} else {
 			$config['attr_dom'] = strtolower($config['attr_dom']);
 		}
-		if (! $config['domain_static']) {
+		if (! ($config['domain_static'] ?? null)) {
 			$config['domain_static'] = '';
 		}
-		if (! $config['ignore_domains']) {
+		if (! ($config['ignore_domains'] ?? null)) {
 			$config['ignore_domains'] = array();
 		}
-		if (! $config['non_domain_attr']) {
+		if (! ($config['non_domain_attr'] ?? null)) {
 			$config['non_domain_attr'] = 'stop';
 		}
-		if (! $config['attr_name']) {
+		if (! ($config['attr_name'] ?? null)) {
 			$config['attr_name'] = '';
 		} else {
 			$config['attr_name'] = strtolower($config['attr_name']);
 		}
-		if (! $config['attr_org']) {
+		if (! ($config['attr_org'] ?? null)) {
 			$config['attr_org'] = '';
 		} else {
 			$config['attr_org'] = strtolower($config['attr_org']);
 		}
-		if (! $config['attr_reply']) {
+		if (! ($config['attr_reply'] ?? null)) {
 			$config['attr_reply'] = '';
 		} else {
 			$config['attr_reply'] = strtolower($config['attr_reply']);
 		}
-		if (! $config['attr_bcc']) {
+		if (! ($config['attr_bcc'] ?? null)) {
 			$config['attr_bcc'] = '';
 		} else {
 			$config['attr_bcc'] = strtolower($config['attr_bcc']);
 		}
-		if (! $config['attr_sig']) {
+		if (! ($config['attr_sig'] ?? null)) {
 			$config['attr_sig'] = '';
 		} else {
 			$config['attr_sig'] = strtolower($config['attr_sig']);
@@ -803,13 +812,13 @@ class ldapAliasSync extends rcube_plugin {
 		$LOG_LEVELS = array(3, 2, 1, 0);
 
 		// Set default values for empty parameters
-		if (! $config['log_level']) {
+		if (! ($config['log_level'] ?? null)) {
 			$config['log_level'] = 'error';
 		}
-		if (! $config['update_existing']) {
+		if (! ($config['update_existing'] ?? null)) {
 			$config['update_existing'] = false;
 		}
-		if (! $config['update_empty_fields']) {
+		if (! ($config['update_empty_fields'] ?? null)) {
 			$config['update_empty_fields'] = false;
 		}
 
