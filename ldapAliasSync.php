@@ -115,7 +115,7 @@ class ldapAliasSync extends rcube_plugin {
 
 		$con = ldap_connect($uri);
 
-		if ( is_resource($con) ) {
+		if ( is_resource($con) || is_a($con, "LDAP\Connection") ) {
 			$this->log_debug("LDAP resource: ".$uri);
 			ldap_set_option($con, LDAP_OPT_PROTOCOL_VERSION, 3);
 		} else {
@@ -559,7 +559,7 @@ class ldapAliasSync extends rcube_plugin {
 	}
 
 	function check_user_config($config) {
-		$DEREFS   = array($LDAP_DEREF_NEVER, $LDAP_DEREF_FINDING, $LDAP_DEREF_SEARCHING, $LDAP_DEREF_ALWAYS);
+		$DEREFS   = array(LDAP_DEREF_NEVER, LDAP_DEREF_FINDING, LDAP_DEREF_SEARCHING, LDAP_DEREF_ALWAYS);
 		$MAIL_BYS = array('attribute', 'dn', 'memberof', 'static');
 		$NDATTRS  = array('stop', 'skip');
 
@@ -629,16 +629,16 @@ class ldapAliasSync extends rcube_plugin {
 		// Override values
 		switch ( $config['deref'] ) {
 			case 'never':
-				$config['deref'] = $LDAP_DEREF_NEVER;
+				$config['deref'] = LDAP_DEREF_NEVER;
 				break;
 			case 'search':
-				$config['deref'] = $LDAP_DEREF_SEARCHING;
+				$config['deref'] = LDAP_DEREF_SEARCHING;
 				break;
 			case 'find':
-				$config['deref'] = $LDAP_DEREF_FINDING;
+				$config['deref'] = LDAP_DEREF_FINDING;
 				break;
 			case 'always':
-				$config['deref'] = $LDAP_DEREF_ALWAYS;
+				$config['deref'] = LDAP_DEREF_ALWAYS;
 				break;
 		}
 
@@ -685,7 +685,7 @@ class ldapAliasSync extends rcube_plugin {
 	}
 
 	function check_alias_config($config) {
-		$DEREFS   = array($LDAP_DEREF_NEVER, $LDAP_DEREF_SEARCHING, $LDAP_DEREF_FINDING, $LDAP_DEREF_ALWAYS);
+		$DEREFS   = array(LDAP_DEREF_NEVER, LDAP_DEREF_SEARCHING, LDAP_DEREF_FINDING, LDAP_DEREF_ALWAYS);
 		$MAIL_BYS = array('attribute', 'dn', 'memberof', 'static');
 		$NDATTRS  = array('stop', 'skip');
 
@@ -755,16 +755,16 @@ class ldapAliasSync extends rcube_plugin {
 		// Override values
 		switch ( $config['deref'] ) {
 			case 'never':
-				$config['deref'] = $LDAP_DEREF_NEVER;
+				$config['deref'] = LDAP_DEREF_NEVER;
 				break;
 			case 'search':
-				$config['deref'] = $LDAP_DEREF_SEARCHING;
+				$config['deref'] = LDAP_DEREF_SEARCHING;
 				break;
 			case 'find':
-				$config['deref'] = $LDAP_DEREF_FINDING;
+				$config['deref'] = LDAP_DEREF_FINDING;
 				break;
 			case 'always':
-				$config['deref'] = $LDAP_DEREF_ALWAYS;
+				$config['deref'] = LDAP_DEREF_ALWAYS;
 				break;
 		}
 
