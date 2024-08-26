@@ -93,8 +93,10 @@ class ldapAliasSync extends rcube_plugin {
 			$this->log_error('Runtime error: '.$exc->getMessage());
 		}
 
-		ldap_close($this->ldap_con);
-		$this->log_debug("LDAP connection closed");
+		if ($this->ldap_con) {
+			ldap_close($this->ldap_con);
+			$this->log_debug("LDAP connection closed");
+		}
 
 		return $args;
 	}
