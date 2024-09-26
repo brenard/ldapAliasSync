@@ -433,11 +433,19 @@ class ldapAliasSync extends rcube_plugin {
 		$value         = '';
 		$in_db         = false;
 		$in_ldap       = false;
+		$catchalls     = array();
 
 		if ( count($identities) > 0 && $db_identities = $this->rc_user->list_identities() ) {
 
 			# Check which identities not yet contained in the database
 			foreach ( $identities as $identity ) {
+
+				# Skip catchall LDAP entries
+				if( substr($identity['email'],0,1) === "@" ) {
+					array_push($catchalls,$identity['email']);
+					continue;
+				}
+
 				$in_db = false;
 				unset($identity['dn']);
 
@@ -466,16 +474,26 @@ class ldapAliasSync extends rcube_plugin {
 				}
 			}
 
-			# Check which identities are available in database but nut in LDAP and delete those
+			# Check which identities are available in database but not in LDAP and delete those
 			foreach ( $db_identities as $db_identity ) {
 				$in_ldap = false;
 
-				foreach ( $identities as $identity ) {
-					# email is our only comparison parameter
-					if( $db_identity['email'] == $identity['email'] ) {
-						$in_ldap = true;
-						break;
+				# Skip catchall LDAP entries
+				foreach( $catchalls as $catchall ) {
+					if( substr($db_identity['email'], -strlen($catchall)) == $catchall ) {
+					    $in_ldap = true;
+					    break;
 					}
+				}
+
+				if ( !$in_ldap ) {
+				    foreach ( $identities as $identity ) {
+					    # email is our only comparison parameter
+					    if( $db_identity['email'] == $identity['email'] ) {
+						    $in_ldap = true;
+						    break;
+					    }
+				    }
 				}
 
 				# If this identity does not exist in LDAP, delete it from database
